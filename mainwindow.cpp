@@ -12,6 +12,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->line->setEnabled(false);
     connect(ui->line, SIGNAL(editingFinished()), SLOT(changeText()));
     connect(ui->btn, SIGNAL(clicked()), SLOT(loadText()));
+    QHeaderView* header = ui->table->horizontalHeader();
+    header->setSectionResizeMode(QHeaderView::Stretch);
 }
 
 MainWindow::~MainWindow() {
@@ -19,12 +21,14 @@ MainWindow::~MainWindow() {
 }
 
 void MainWindow::loadText() {
-    QString filePath = QFileDialog::getOpenFileName(this, "", "");
+    QString filePath = QFileDialog::getOpenFileName(this, "", QDir::currentPath(), "txt *.txt");
     std::string str, word;
     if (!filePath.toStdString().empty()) {
         std::ifstream file(filePath.toStdString());
         if (!file.is_open()) {
             error("Could not open the files");
+            ui->line->clear();
+            ui->line->setEnabled(false);
             return;
         }
         while (file >> str) {
@@ -78,7 +82,5 @@ void MainWindow::changeText() {
         ui->table->item(i,0)->setFlags(Qt::ItemIsDragEnabled|Qt::ItemIsUserCheckable|Qt::ItemIsSelectable);
         ui->table->item(i,1)->setFlags(Qt::ItemIsDragEnabled|Qt::ItemIsUserCheckable|Qt::ItemIsSelectable);
     }
-    QHeaderView* header = ui->table->horizontalHeader();
-    header->setSectionResizeMode(QHeaderView::Stretch);
 }
 
