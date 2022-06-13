@@ -17,10 +17,11 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    PredictionTrie trie;
+    PredictionTrie _trie;
+    void error(const std::string& error);
 
 private slots:
     void loadText();
-    void changeText(const QString& text);
+    void changeText();
 };
 #endif // MAINWINDOW_H

@@ -99,11 +99,15 @@ bool PredictionTrie::isPresented(const std::string& word) const
 std::vector<MatchedPair> PredictionTrie::allWordsStartedWith(const std::string& wordBegin) const
 {
     auto* found = find(wordBegin);
+    std::vector<MatchedPair> result;
     if (!found)
     {
         return {};
     }
-    std::vector<MatchedPair> result;
+    else if (found->type == PredictionTrieNode::Type::Leaf) {
+        result.emplace_back(wordBegin, found->count);
+    }
+
     collectAllWordsStartedWith(wordBegin, found->children, result);
 
     return result;

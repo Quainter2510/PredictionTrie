@@ -2,33 +2,32 @@
 #include <QFileDialog>
 #include <fstream>
 #include <sstream>
+#include <iostream>
 #include "./ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
-{
+    , ui(new Ui::MainWindow) {
     ui->setupUi(this);
-    connect(ui->line, SIGNAL(textChanged()), SLOT(changeText()));
+    ui->line->setEnabled(false);
+    connect(ui->line, SIGNAL(editingFinished()), SLOT(changeText()));
     connect(ui->btn, SIGNAL(clicked()), SLOT(loadText()));
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow() {
     delete ui;
 }
 
 void MainWindow::loadText() {
-    QString filePath = QFileDialog::getExistingDirectory(this, tr("Choose Directory"), "");
+    QString filePath = QFileDialog::getOpenFileName(this, "", "");
     std::string str, word;
     if (!filePath.toStdString().empty()) {
         std::ifstream file(filePath.toStdString());
         if (!file.is_open()) {
-            throw std::runtime_error("Could not open the files ");
+            error("Could not open the files");
+            return;
         }
-        file >> str;
-        while (!str.empty()) {
-
+        while (file >> str) {
             for (char c : str) {
                 if ('a' <= c && 'z' >= c) {
                     word += c;
@@ -38,27 +37,48 @@ void MainWindow::loadText() {
                 }
             }
             if (!word.empty()){
-                trie.insert(word);
+                _trie.insert(word);
             }
+
             word.clear();
-            file >> str;
         }
     }
+    ui->line->setEnabled(true);
+    changeText();
 }
 
-void MainWindow::changeText(const QString& text) {
-    std::vector<MatchedPair> q = trie.allWordsStartedWith(text.toStdString());
+void MainWindow::error(const std::string& error) {
+    ui->table->clear();
+    ui->table->setColumnCount(1);
+    ui->table->setRowCount(1);
+    ui->table->setHorizontalHeaderItem(0, new QTableWidgetItem(QString("ERROR")));
+    QTableWidgetItem* item = new QTableWidgetItem(QString::fromStdString(error));
+    item->setTextAlignment(4);
+    ui->table->setItem(0, 0, item);
+    ui->table->item(0,0)->setFlags(Qt::ItemIsDragEnabled|Qt::ItemIsUserCheckable|Qt::ItemIsSelectable);
+}
+
+void MainWindow::changeText() {
+    QString text = ui->line->text();
+    std::vector<MatchedPair> q = _trie.allWordsStartedWith(text.toStdString());
     if (q.empty()) {
-        ui->table->setEnabled(false);
-        ui->table->clear();
+        error("words not found");
+        return;
     }
     std::sort(q.begin(), q.end(), comp);
     ui->table->clear();
     ui->table->setRowCount(q.size());
     ui->table->setColumnCount(2);
-    for (int i = 0; i < q.size(); i++) {
+    ui->table->setHorizontalHeaderItem(0, new QTableWidgetItem(QString("Word")));
+    ui->table->setHorizontalHeaderItem(1, new QTableWidgetItem(QString("Count")));
+    for (size_t i = 0; i < q.size(); i++) {
         ui->table->setItem(i, 0, new QTableWidgetItem(QString::fromStdString(std::get<0>(q[i]))));
-        ui->table->setItem(i, 1, new QTableWidgetItem(std::get<1>(q[i])));
+        ui->table->setItem(i, 1, new QTableWidgetItem(QString::number(std::get<1>(q[i]))));
+
+        ui->table->item(i,0)->setFlags(Qt::ItemIsDragEnabled|Qt::ItemIsUserCheckable|Qt::ItemIsSelectable);
+        ui->table->item(i,1)->setFlags(Qt::ItemIsDragEnabled|Qt::ItemIsUserCheckable|Qt::ItemIsSelectable);
     }
+    QHeaderView* header = ui->table->horizontalHeader();
+    header->setSectionResizeMode(QHeaderView::Stretch);
 }
 

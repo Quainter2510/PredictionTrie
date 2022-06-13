@@ -41,6 +41,11 @@
       <height>521</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
    </widget>
    <widget class="QLineEdit" name="line">
     <property name="geometry">
@@ -59,7 +64,7 @@
      <x>0</x>
      <y>0</y>
      <width>546</width>
-     <height>27</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
